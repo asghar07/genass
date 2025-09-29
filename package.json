@@ -1,0 +1,84 @@
+{
+  "name": "genass",
+  "version": "1.0.0",
+  "description": "AI-powered asset generation CLI that scans codebases and generates missing visual assets using Claude SDK and Google Imagen 3",
+  "main": "dist/index.js",
+  "bin": {
+    "genass": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "asset-generation",
+    "assets",
+    "automation",
+    "cli",
+    "cli-tool",
+    "claude",
+    "claude-ai",
+    "codebase",
+    "codebase-scanner",
+    "developer-tools",
+    "generative-ai",
+    "generation",
+    "google-imagen",
+    "icon-generator",
+    "image-generation",
+    "imagen",
+    "logo-generator",
+    "npm-package",
+    "typescript",
+    "visual-assets"
+  ],
+  "author": "Asghar <asghar.07@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "github:asghar07/genass"
+  },
+  "homepage": "https://github.com/asghar07/genass",
+  "bugs": {
+    "url": "https://github.com/asghar07/genass/issues"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.0",
+    "globby": "^14.0.0",
+    "inquirer": "^9.2.12",
+    "mime-types": "^2.1.35",
+    "ora": "^8.0.1",
+    "sharp": "^0.33.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/jest": "^29.5.8",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
