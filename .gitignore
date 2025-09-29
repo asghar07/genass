@@ -108,5 +108,6 @@ test-output/
 !package*.json
 service-account-key.json
 
-# Local configuration
-genass.config.json
+# Local configuration overrides (keep base genass.config.json committable)
+.genass.config.json
+genass.config.local.json

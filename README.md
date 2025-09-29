@@ -202,7 +202,17 @@ your-project/
 
 ## ⚙️ Configuration
 
+**TL;DR: Configuration is optional!** GenAss automatically generates sensible defaults based on your project type. You only need to customize if you want to override defaults.
+
 ### Project Configuration (`genass.config.json`)
+
+The config file is **automatically created** on first run if it doesn't exist. You can:
+
+- **Skip it entirely** - GenAss creates smart defaults based on your framework
+- **Commit it** - Share config across your team
+- **Override locally** - Use `genass.config.local.json` for personal settings (gitignored)
+
+**Example auto-generated config:**
 
 ```json
 {
@@ -231,6 +241,8 @@ your-project/
   }
 }
 ```
+
+**Framework-specific defaults** are automatically applied for React, Next.js, Vue, Angular, Svelte, and more!
 
 ### Global Configuration
 

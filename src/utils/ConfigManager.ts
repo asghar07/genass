@@ -68,6 +68,21 @@ export class ConfigManager {
       await this.createDefaultProjectConfig(projectConfigPath, config);
     }
 
+    // Load local overrides if they exist (genass.config.local.json)
+    const localConfigPath = path.join(projectPath, 'genass.config.local.json');
+    if (await fs.pathExists(localConfigPath)) {
+      try {
+        const localConfig = await fs.readJson(localConfigPath);
+        config = { ...config, ...localConfig };
+        logger.info('Loaded local configuration overrides', { configPath: localConfigPath });
+      } catch (error) {
+        logger.warn('Failed to load local configuration', {
+          configPath: localConfigPath,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
     // Apply global configuration overrides
     const globalConfig = await this.getGlobalConfig();
     if (globalConfig.defaultAssetFormat) {
