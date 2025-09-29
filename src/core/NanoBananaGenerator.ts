@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AssetNeed, GeneratedAsset } from '../types';
 import { logger } from '../utils/logger';
+import { SmartFilenameGenerator } from './SmartFilenameGenerator';
 
 interface GenerationOptions {
   outputDir: string;
@@ -33,11 +34,14 @@ interface QualityCheckResult {
 export class NanoBananaGenerator {
   private client: GoogleGenerativeAI;
   private defaultConfig: NanoBananaConfig;
+  private filenameGenerator: SmartFilenameGenerator;
 
   constructor() {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY environment variable is required');
     }
+
+    this.filenameGenerator = new SmartFilenameGenerator();
 
     // Use v1 API to avoid OAuth2 requirement
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -656,8 +660,9 @@ TECHNICAL SPECS: ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}px,
     // Ensure output directory exists
     await fs.ensureDir(options.outputDir);
 
-    // Generate filename
-    const filename = this.generateFilename(assetNeed, options.format);
+    // Generate smart filename
+    const baseFilename = await this.filenameGenerator.generateFilename(assetNeed);
+    const filename = `${baseFilename}.${options.format}`;
     const outputPath = path.join(options.outputDir, filename);
 
     try {
@@ -734,23 +739,16 @@ TECHNICAL SPECS: ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}px,
     }
   }
 
+  // Legacy method - kept for backward compatibility
   private generateFilename(assetNeed: AssetNeed, format: string): string {
-    // Generate a clean, descriptive filename
+    // Fallback to simple naming if smart generation fails
     const cleanDescription = assetNeed.description
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, '-')
-      .substring(0, 40);
+      .substring(0, 20);
 
-    const timestamp = Date.now();
-
-    // Handle dimensions safely - only include if both width and height are defined
-    let dimensionPart = '';
-    if (assetNeed.dimensions?.width && assetNeed.dimensions?.height) {
-      dimensionPart = `-${assetNeed.dimensions.width}x${assetNeed.dimensions.height}`;
-    }
-
-    return `nanobana-${assetNeed.type}-${cleanDescription}${dimensionPart}-${timestamp}.${format}`;
+    return `${assetNeed.type}-${cleanDescription}.${format}`;
   }
 
   private createBatches<T>(items: T[], batchSize: number): T[][] {

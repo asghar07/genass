@@ -7,6 +7,7 @@ import { CodebaseScanner } from './CodebaseScanner';
 import { AssetAnalyzer } from './AssetAnalyzer';
 import { GeminiOrchestrator } from './GeminiOrchestrator';
 import { NanoBananaGenerator } from './NanoBananaGenerator';
+import { CodeInjector } from './CodeInjector';
 import { PlatformAssetGenerator } from './PlatformAssetGenerator';
 import { ProjectConfig, CodebaseAnalysis, GenerationPlan, AssetNeed } from '../types';
 import { logger } from '../utils/logger';
@@ -17,16 +18,19 @@ export class GenAssManager {
   private analyzer: AssetAnalyzer;
   private orchestrator: GeminiOrchestrator;
   private generator: NanoBananaGenerator;
+  private codeInjector: CodeInjector;
   private platformAssetGenerator: PlatformAssetGenerator;
   private configManager: ConfigManager;
   private config?: ProjectConfig;
   private moveAction?: 'move' | 'move-flat'; // Temp storage for user's move preference
+  private generatedAssets: any[] = []; // Track generated assets for injection
 
   constructor() {
     this.scanner = new CodebaseScanner();
     this.analyzer = new AssetAnalyzer();
     this.orchestrator = new GeminiOrchestrator();
     this.generator = new NanoBananaGenerator();
+    this.codeInjector = new CodeInjector();
     this.platformAssetGenerator = new PlatformAssetGenerator();
     this.configManager = new ConfigManager();
   }
@@ -449,6 +453,29 @@ export class GenAssManager {
     }
 
     spinner.succeed(`Moved ${moved} assets to public/assets`);
+
+    // Step: Inject assets into code
+    if (this.generatedAssets.length > 0) {
+      console.log(chalk.blue('\n💉 Injecting assets into code files...'));
+      try {
+        const projectType = await this.configManager.detectProjectType(this.config!.rootPath);
+        const results = await this.codeInjector.injectAssets(
+          this.generatedAssets,
+          this.config!.rootPath,
+          projectType
+        );
+
+        const successfulInjections = results.filter(r => r.success).length;
+        if (successfulInjections > 0) {
+          console.log(chalk.green(`✓ Auto-injected ${successfulInjections} assets into ${results.reduce((sum, r) => sum + r.filesModified.length, 0)} files`));
+        } else {
+          console.log(chalk.yellow('⚠️  Could not auto-inject assets. You may need to import them manually.'));
+        }
+      } catch (error) {
+        logger.warn('Code injection failed', error);
+        console.log(chalk.yellow('⚠️  Auto-injection failed. Assets are generated but not yet imported in code.'));
+      }
+    }
 
     // Clean up staging folder
     try {
