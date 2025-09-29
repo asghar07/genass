@@ -79,7 +79,47 @@ For enterprise features and higher rate limits, optionally set up:
 
 ## 🎯 Usage
 
-### Initialize and Scan Project
+### Interactive Mode (Recommended) 🆕
+
+GenAss now features an **interactive AI-powered session** with context caching and streaming responses - similar to Claude Code!
+
+```bash
+# Start interactive session (default when running genass without commands)
+genass
+
+# Or explicitly start chat mode
+genass chat
+
+# Start in specific project directory
+genass chat --path /path/to/project
+```
+
+**Features:**
+- 💬 **Conversational interface** - Natural language interactions
+- 🧠 **Context caching** - Maintains conversation history and project context
+- ⚡ **Streaming responses** - Real-time AI output as it's generated
+- 📊 **Session tracking** - Token usage, costs, and statistics
+- 🎨 **Rich UI** - Beautiful formatting with colors and progress indicators
+
+**Available commands within interactive session:**
+- `/help` - Show available commands
+- `/status` - Display session statistics
+- `/clear` - Clear conversation history
+- `/exit` - Exit the session
+
+**Example interactions:**
+```
+genass> Scan my project and find missing assets
+genass> Generate a modern logo for my React app
+genass> What's the status of my generated assets?
+genass> Create icons for my mobile app
+```
+
+### Command Mode
+
+For scripting and automation, use traditional commands:
+
+#### Initialize and Scan Project
 
 ```bash
 # Scan current directory and create generation plan
@@ -95,7 +135,7 @@ genass init --dry-run
 genass init --config ./custom-config.json
 ```
 
-### Generate Specific Assets
+#### Generate Specific Assets
 
 ```bash
 # Generate high priority assets only
@@ -108,7 +148,7 @@ genass generate --type icon,logo
 genass generate --plan ./generation-plan.json
 ```
 
-### Project Status
+#### Project Status
 
 ```bash
 # Show current project status

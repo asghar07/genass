@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import dotenv from 'dotenv';
 import path from 'path';
 import { GenAssManager } from './core/GenAssManager';
+import { InteractiveSession } from './core/InteractiveSession';
 import { logger } from './utils/logger';
 import { validateEnvironment } from './utils/environment';
 
@@ -116,8 +117,46 @@ program
     }
   });
 
-// Parse command line arguments
-program.parse();
+program
+  .command('chat')
+  .alias('interactive')
+  .description('Start interactive AI-powered session with context caching')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .action(async (options) => {
+    try {
+      if (!validateEnvironment()) {
+        process.exit(1);
+      }
+
+      const session = new InteractiveSession(options.path);
+      await session.start();
+    } catch (error) {
+      logger.error('Interactive session failed:', error);
+      console.error(chalk.red('❌ Failed to start interactive session'));
+      console.error(chalk.gray(error instanceof Error ? error.message : 'Unknown error'));
+      process.exit(1);
+    }
+  });
+
+// If no command is provided, start interactive mode
+if (process.argv.length === 2) {
+  (async () => {
+    try {
+      if (!validateEnvironment()) {
+        process.exit(1);
+      }
+      const session = new InteractiveSession(process.cwd());
+      await session.start();
+    } catch (error) {
+      logger.error('Interactive session failed:', error);
+      console.error(chalk.red('❌ Failed to start interactive session'));
+      process.exit(1);
+    }
+  })();
+} else {
+  // Parse command line arguments
+  program.parse();
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
