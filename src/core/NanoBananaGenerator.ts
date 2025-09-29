@@ -672,8 +672,9 @@ TECHNICAL SPECS: ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}px,
         format: metadata.format
       });
 
-      // Resize if needed to exact dimensions
-      if (assetNeed.dimensions.width > 0 && assetNeed.dimensions.height > 0) {
+      // Resize if needed to exact dimensions (only if dimensions are specified)
+      if (assetNeed.dimensions?.width && assetNeed.dimensions?.height &&
+          assetNeed.dimensions.width > 0 && assetNeed.dimensions.height > 0) {
         // Check if resize is needed
         if (metadata.width !== assetNeed.dimensions.width ||
             metadata.height !== assetNeed.dimensions.height) {
@@ -742,9 +743,14 @@ TECHNICAL SPECS: ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}px,
       .substring(0, 40);
 
     const timestamp = Date.now();
-    const dimensions = `${assetNeed.dimensions.width}x${assetNeed.dimensions.height}`;
 
-    return `nanobana-${assetNeed.type}-${cleanDescription}-${dimensions}-${timestamp}.${format}`;
+    // Handle dimensions safely - only include if both width and height are defined
+    let dimensionPart = '';
+    if (assetNeed.dimensions?.width && assetNeed.dimensions?.height) {
+      dimensionPart = `-${assetNeed.dimensions.width}x${assetNeed.dimensions.height}`;
+    }
+
+    return `nanobana-${assetNeed.type}-${cleanDescription}${dimensionPart}-${timestamp}.${format}`;
   }
 
   private createBatches<T>(items: T[], batchSize: number): T[][] {
