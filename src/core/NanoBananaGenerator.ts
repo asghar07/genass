@@ -368,27 +368,31 @@ TECHNICAL SPECS: ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}px,
       const metadata = await image.metadata();
       const stats = await image.stats();
 
-      // 1. Dimension validation (critical)
-      if (metadata.width !== assetNeed.dimensions.width || metadata.height !== assetNeed.dimensions.height) {
-        issues.push(`Dimension mismatch: expected ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}, got ${metadata.width}x${metadata.height}`);
-        score -= 0.3;
+      // 1. Dimension validation (critical) - only if dimensions are specified
+      if (assetNeed.dimensions?.width && assetNeed.dimensions?.height) {
+        if (metadata.width !== assetNeed.dimensions.width || metadata.height !== assetNeed.dimensions.height) {
+          issues.push(`Dimension mismatch: expected ${assetNeed.dimensions.width}x${assetNeed.dimensions.height}, got ${metadata.width}x${metadata.height}`);
+          score -= 0.3;
+        }
       }
 
       // 2. File size validation (too small = low quality, too large = bloated)
       const fileStats = await fs.stat(filePath);
       const fileSizeKB = fileStats.size / 1024;
 
-      // Expected size ranges based on dimensions
-      const pixelCount = assetNeed.dimensions.width * assetNeed.dimensions.height;
-      const minSizeKB = pixelCount / 1000; // Minimum 1KB per 1000 pixels
-      const maxSizeKB = pixelCount / 50; // Maximum 1KB per 50 pixels
+      // Expected size ranges based on dimensions (only if dimensions are specified)
+      if (assetNeed.dimensions?.width && assetNeed.dimensions?.height) {
+        const pixelCount = assetNeed.dimensions.width * assetNeed.dimensions.height;
+        const minSizeKB = pixelCount / 1000; // Minimum 1KB per 1000 pixels
+        const maxSizeKB = pixelCount / 50; // Maximum 1KB per 50 pixels
 
-      if (fileSizeKB < minSizeKB) {
-        issues.push(`File size too small (${fileSizeKB.toFixed(2)}KB), may indicate low quality or excessive compression`);
-        score -= 0.2;
-      } else if (fileSizeKB > maxSizeKB) {
-        issues.push(`File size too large (${fileSizeKB.toFixed(2)}KB), may need optimization`);
-        score -= 0.1; // Less severe
+        if (fileSizeKB < minSizeKB) {
+          issues.push(`File size too small (${fileSizeKB.toFixed(2)}KB), may indicate low quality or excessive compression`);
+          score -= 0.2;
+        } else if (fileSizeKB > maxSizeKB) {
+          issues.push(`File size too large (${fileSizeKB.toFixed(2)}KB), may need optimization`);
+          score -= 0.1; // Less severe
+        }
       }
 
       // 3. Color channel analysis
