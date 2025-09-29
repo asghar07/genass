@@ -185,6 +185,9 @@ Current project: ${projectPath}`
     console.log(chalk.gray(`Model: ${this.config.model}`));
     console.log(chalk.gray(`Type ${chalk.white('/help')} for commands or ${chalk.white('/exit')} to quit\n`));
 
+    // Run onboarding flow to gather context
+    await this.runOnboarding();
+
     return new Promise((resolve) => {
       this.rl.prompt();
 
@@ -591,5 +594,108 @@ Current project: ${projectPath}`
 
   public getContext(): SessionContext {
     return this.context;
+  }
+
+  private async runOnboarding(): Promise<void> {
+    try {
+      // Detect project type
+      const packageJsonPath = path.join(this.context.projectPath, 'package.json');
+      let projectType = 'unknown';
+      let projectName = path.basename(this.context.projectPath);
+
+      if (await fs.pathExists(packageJsonPath)) {
+        const pkg = await fs.readJson(packageJsonPath);
+        projectName = pkg.name || projectName;
+
+        // Detect framework
+        if (pkg.dependencies?.next || pkg.devDependencies?.next) {
+          projectType = 'Next.js';
+        } else if (pkg.dependencies?.react || pkg.devDependencies?.react) {
+          projectType = 'React';
+        } else if (pkg.dependencies?.vue || pkg.devDependencies?.vue) {
+          projectType = 'Vue.js';
+        } else if (pkg.dependencies?.angular || pkg.devDependencies?.['@angular/core']) {
+          projectType = 'Angular';
+        } else if (pkg.dependencies?.svelte || pkg.devDependencies?.svelte) {
+          projectType = 'Svelte';
+        }
+      }
+
+      // Display detected info
+      console.log(chalk.bold.white('👋 Welcome! Let me learn about your project...\n'));
+
+      if (projectType !== 'unknown') {
+        console.log(chalk.green(`✓ Detected: ${projectType} project`));
+      }
+
+      console.log(chalk.gray(`  Project: ${projectName}\n`));
+
+      // Ask about the app's purpose
+      console.log(chalk.white('To provide the best asset recommendations, tell me:'));
+      console.log(chalk.cyan('What does your app do? (e.g., "It\'s an e-commerce site for selling shoes")\n'));
+
+      // Get user response
+      const appGoal = await this.promptUser('Your app: ');
+
+      if (appGoal && appGoal.trim().length > 0) {
+        // Update context
+        this.context.cachedContext = appGoal.trim();
+
+        // Update system instruction with this context
+        this.updateSystemInstructionWithContext(projectType, projectName, appGoal.trim());
+
+        // Re-initialize model with updated context
+        this.initializeModel();
+
+        console.log(chalk.green('\n✓ Got it! I\'ll keep that in mind for recommendations.\n'));
+      } else {
+        console.log(chalk.yellow('\n⚠️  No problem! I\'ll provide general recommendations.\n'));
+      }
+
+      console.log(chalk.gray('Type your request below, or use /help for commands\n'));
+
+    } catch (error) {
+      logger.warn('Onboarding failed', error);
+      // Continue anyway - onboarding is optional
+    }
+  }
+
+  private async promptUser(message: string): Promise<string> {
+    return new Promise((resolve) => {
+      this.rl.question(chalk.cyan(message), (answer) => {
+        resolve(answer);
+      });
+    });
+  }
+
+  private updateSystemInstructionWithContext(projectType: string, projectName: string, appGoal: string): void {
+    this.config.systemInstruction = `You are GenAss, an AI-powered asset generation assistant. You help users analyze their codebase and generate visual assets using Google Gemini API and Nano Banana (Gemini 2.5 Flash Image).
+
+PROJECT CONTEXT:
+- Project Name: ${projectName}
+- Project Type: ${projectType}
+- App Purpose: ${appGoal}
+
+Use this context to provide highly relevant recommendations!
+
+IMPORTANT: You have access to REAL functions that you MUST USE to perform actions. Don't just describe what you would do - actually call the functions!
+
+Available functions:
+- scanProject: Scan a project directory to analyze codebase and identify asset needs
+- generateAssets: Generate visual assets based on a plan (after scanning)
+- getProjectStatus: Get the current status of the project and generated assets
+- listFiles: List files in a directory to understand project structure
+
+When a user asks you to:
+- "scan the project/folder" → CALL scanProject function
+- "generate assets/logo/icons" → CALL generateAssets function
+- "show status" → CALL getProjectStatus function
+- "what files are there" → CALL listFiles function
+
+Always use functions to take real actions. After calling a function, explain the results to the user.
+
+Current project: ${this.context.projectPath}
+
+Be conversational, helpful, and proactive in suggesting assets that would benefit "${appGoal}".`;
   }
 }
