@@ -244,12 +244,22 @@ genass> /inject
 
 ### "GEMINI_API_KEY not found"
 
+Get your API key from Google Cloud Console:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to **APIs & Services** → **Credentials**
+3. Click **+ CREATE CREDENTIALS** → **API Key**
+4. Enable **Generative Language API** (Gemini)
+5. Copy your API key
+
 Set your API key:
 
 ```bash
 export GEMINI_API_KEY=your_key_here
-# Or create .env file
+# Or create .env file with the key
 ```
+
+**Note:** Use Google Cloud Console, not AI Studio, for the API key.
 
 ### "No assets generated"
 

@@ -91,9 +91,10 @@ Do not:
 ### 3. Rotate Keys Regularly
 
 If you suspect your key is compromised:
-1. Generate new API key at [Google AI Studio](https://aistudio.google.com/apikey)
-2. Update `.env` file
-3. Revoke old key
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**
+2. Create a new API key
+3. Update `.env` file with new key
+4. Delete the old API key from Cloud Console
 
 ### 4. Set Budget Limits
 

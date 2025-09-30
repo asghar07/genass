@@ -72,10 +72,17 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 ### 2. Google Gemini API Setup
 
-1. Visit [Google AI Studio](https://aistudio.google.com/apikey)
-2. Sign in with your Google account
-3. Generate a new API key
-4. Add it to your `.env` file as `GEMINI_API_KEY`
+**Get your API key from Google Cloud Console:**
+
+1. Visit [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Go to **APIs & Services** → **Credentials**
+4. Click **+ CREATE CREDENTIALS** → **API Key**
+5. Enable the **Generative Language API** (Gemini)
+6. Copy your API key
+7. Add it to your `.env` file as `GEMINI_API_KEY`
+
+**Important:** Use the API key from **Google Cloud Console Credentials**, not AI Studio.
 
 ### 3. Optional: Google Cloud (Enterprise Features)
 
@@ -428,9 +435,11 @@ npm test
 
 ## 📚 Documentation
 
+- **[Setup Guide](docs/SETUP_GUIDE.md)** - Step-by-step installation & API key setup
 - **[User Guide](docs/USER_GUIDE.md)** - Complete usage guide with examples
 - **[API Documentation](docs/API.md)** - Programmatic API reference
-- **[Publishing Guide](docs/PUBLISHING.md)** - How to publish/release
+- **[Security Policy](SECURITY.md)** - Security best practices
+- **[Publishing Guide](docs/PUBLISHING.md)** - How to publish/release (for contributors)
 - **[Examples](docs/examples/)** - Code examples and tutorials
 - **[CHANGELOG](CHANGELOG.md)** - Version history and changes
 
