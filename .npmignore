@@ -1,15 +1,22 @@
 # Development files
 src/
 tsconfig.json
+
+# Environment and secrets
 .env
-.env.example
+.env.*
+*.key
+*.pem
+service-account*.json
+credentials*.json
 
 # Tests
 *.test.ts
 *.spec.ts
 __tests__/
+coverage/
 
-# Documentation (keep README.md)
+# Documentation (keep README.md, LICENSE, CHANGELOG.md)
 docs/
 CONTRIBUTING.md
 INSTALL.md
@@ -29,7 +36,7 @@ INSTALL.md
 logs/
 *.log
 
-# Examples (optional - could include)
+# Examples
 examples/
 
 # Build artifacts
@@ -43,6 +50,16 @@ generated-assets/
 setup.sh
 test-install.js
 
+# Local config
+genass.config.local.json
+.genass.config.json
+AGENTS.md
+
 # OS
 .DS_Store
 Thumbs.db
+._*
+
+# Node
+node_modules/
+npm-debug.log*

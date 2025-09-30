@@ -1,7 +1,7 @@
 {
   "name": "genass",
   "version": "1.0.0",
-  "description": "AI-powered asset generation CLI that scans codebases and generates missing visual assets using Claude SDK and Google Imagen 3",
+  "description": "AI-powered asset generation CLI with interactive mode. Intelligently scans codebases and generates missing visual assets using Google Gemini API and Nano Banana (Gemini 2.5 Flash Image). Features context memory, smart filenames, auto code injection, and cost tracking.",
   "main": "dist/index.js",
   "bin": {
     "genass": "dist/cli.js"
@@ -13,7 +13,7 @@
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build && npm test",
+    "prepublishOnly": "npm run build",
     "version": "npm run build",
     "postversion": "git push && git push --tags",
     "release:patch": "npm version patch -m \"Release v%s\"",
@@ -28,21 +28,23 @@
     "automation",
     "cli",
     "cli-tool",
-    "claude",
-    "claude-ai",
+    "gemini",
+    "google-gemini",
+    "nano-banana",
     "codebase",
     "codebase-scanner",
     "developer-tools",
     "generative-ai",
     "generation",
-    "google-imagen",
     "icon-generator",
     "image-generation",
-    "imagen",
     "logo-generator",
-    "npm-package",
+    "interactive-cli",
     "typescript",
-    "visual-assets"
+    "visual-assets",
+    "smart-filenames",
+    "cost-tracking",
+    "context-memory"
   ],
   "author": "Asghar <asghar.07@gmail.com>",
   "license": "MIT",
@@ -86,6 +88,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ]
 }

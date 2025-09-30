@@ -14,6 +14,16 @@ A comprehensive CLI tool that intelligently scans your codebase, identifies miss
 
 ## 📦 Installation
 
+### NPM Installation (Recommended)
+
+```bash
+# Install globally
+npm install -g genass
+
+# Or use with npx (no installation)
+npx genass
+```
+
 ### Local Development Installation
 
 ```bash
@@ -438,6 +448,21 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 - **Documentation**: [docs.genass.dev](https://docs.genass.dev)
 - **Discord**: [Join our community](https://discord.gg/genass)
 
+## 🔒 Security
+
+GenAss follows security best practices:
+
+- ✅ All API keys stored in environment variables only
+- ✅ No secrets committed to version control
+- ✅ `.env` files automatically gitignored
+- ✅ Budget limits prevent runaway costs
+- ✅ Input validation on all operations
+- ✅ Scope restricted to asset generation only
+
+**See [SECURITY.md](SECURITY.md) for complete security policy.**
+
+**NEVER commit your `.env` file or share your API keys!**
+
 ## 🙏 Acknowledgments
 
 - [Google AI](https://ai.google.dev) for Gemini API and Nano Banana
@@ -447,3 +472,5 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 ---
 
 **GenAss** - Generate comprehensive visual assets for your projects with Google's AI-powered intelligence.
+
+Made with ❤️ by [Asghar](https://github.com/asghar07)
