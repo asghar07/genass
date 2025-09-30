@@ -55,7 +55,7 @@ export class AssetAnalyzer {
     const stats = await fs.stat(assetPath);
     const ext = path.extname(assetPath).toLowerCase();
 
-    let metadata: AssetAnalysisResult['metadata'] = {
+    const metadata: AssetAnalysisResult['metadata'] = {
       dimensions: { width: 0, height: 0 },
       format: ext.slice(1),
       size: stats.size,
