@@ -15,6 +15,11 @@ export interface SessionContext {
   totalTokensUsed: number;
   totalCost: number;
   manager?: GenAssManager;
+  currentTasks: Array<{
+    id: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  }>;
 }
 
 export interface SessionConfig {
@@ -46,7 +51,28 @@ export class InteractiveSession {
       temperature: 0.7,
       maxOutputTokens: 8192,
       enableContextCaching: true,
-      systemInstruction: `You are GenAss, an AI-powered asset generation assistant. You help users analyze their codebase and generate visual assets using Google Gemini API and Nano Banana (Gemini 2.5 Flash Image).
+      systemInstruction: `You are GenAss, a SPECIALIZED AI assistant for visual asset generation ONLY.
+
+YOUR SOLE PURPOSE: Help users generate visual assets (logos, icons, banners, images, etc.) for their projects.
+
+STRICT SCOPE - YOU CAN ONLY:
+✅ Scan projects to identify missing visual assets
+✅ Generate logos, icons, banners, illustrations, favicons
+✅ Create social media images (OG, Twitter cards)
+✅ Generate PWA/app icons
+✅ Audit existing visual assets
+✅ Recommend asset improvements
+✅ Create branding packages
+
+❌ YOU CANNOT:
+- Write code (except asset imports/references)
+- Debug applications
+- Explain programming concepts
+- Perform general coding tasks
+- Answer non-asset-related questions
+- Modify application logic
+
+If asked to do something outside asset generation, politely decline and redirect to asset-related tasks.
 
 IMPORTANT: You have access to REAL functions that you MUST USE to perform actions. Don't just describe what you would do - actually call the functions!
 
@@ -72,7 +98,8 @@ Current project: ${projectPath}`
       conversationHistory: [],
       sessionStartTime: Date.now(),
       totalTokensUsed: 0,
-      totalCost: 0
+      totalCost: 0,
+      currentTasks: []
     };
 
     this.rl = readline.createInterface({
@@ -248,11 +275,23 @@ Current project: ${projectPath}`
       // Quick action commands with prebuilt prompts
       case '/scan':
         console.log(chalk.cyan('🔍 Running quick scan...\n'));
-        await this.processUserInput('Scan my project thoroughly, analyze the codebase, identify all missing assets, and create a comprehensive generation plan. Show me what assets are needed and why.');
+        this.displayTaskList([
+          { id: '1', description: 'Scanning project structure', status: 'in_progress' },
+          { id: '2', description: 'Analyzing codebase for asset references', status: 'pending' },
+          { id: '3', description: 'Identifying missing visual assets', status: 'pending' },
+          { id: '4', description: 'Creating generation plan', status: 'pending' }
+        ]);
+        await this.processUserInput('Scan my project thoroughly, analyze the codebase, identify all missing VISUAL ASSETS (logos, icons, images, banners), and create a comprehensive generation plan. Show me what visual assets are needed and why.');
         return true;
 
       case '/logo':
         console.log(chalk.cyan('🎨 Generating logo...\n'));
+        this.displayTaskList([
+          { id: '1', description: 'Analyzing app purpose and brand', status: 'in_progress' },
+          { id: '2', description: 'Designing logo concept', status: 'pending' },
+          { id: '3', description: 'Generating primary logo', status: 'pending' },
+          { id: '4', description: 'Creating icon variant', status: 'pending' }
+        ]);
         await this.processUserInput('Generate a professional, modern logo for my app that reflects its purpose and brand identity. Make it versatile for use across different platforms and sizes. Include both full logo and icon variants.');
         return true;
 
@@ -660,6 +699,38 @@ Current project: ${projectPath}`
     return this.context;
   }
 
+  private displayTaskList(tasks: Array<{ id: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'failed' }>): void {
+    console.log(chalk.bold.white('📋 Tasks:\n'));
+
+    tasks.forEach(task => {
+      let icon = '';
+      let color = chalk.gray;
+
+      switch (task.status) {
+        case 'in_progress':
+          icon = '⠿';
+          color = chalk.cyan;
+          break;
+        case 'completed':
+          icon = '✓';
+          color = chalk.green;
+          break;
+        case 'failed':
+          icon = '✗';
+          color = chalk.red;
+          break;
+        case 'pending':
+          icon = '○';
+          color = chalk.gray;
+          break;
+      }
+
+      console.log(color(`  ${icon} ${task.description}`));
+    });
+
+    console.log(); // Empty line after task list
+  }
+
   private async runOnboarding(): Promise<void> {
     try {
       // Detect project type
@@ -733,33 +804,59 @@ Current project: ${projectPath}`
   }
 
   private updateSystemInstructionWithContext(projectType: string, projectName: string, appGoal: string): void {
-    this.config.systemInstruction = `You are GenAss, an AI-powered asset generation assistant. You help users analyze their codebase and generate visual assets using Google Gemini API and Nano Banana (Gemini 2.5 Flash Image).
+    this.config.systemInstruction = `You are GenAss, a SPECIALIZED AI assistant for visual asset generation ONLY.
+
+YOUR SOLE PURPOSE: Help users generate visual assets (logos, icons, banners, images, etc.) for their projects.
 
 PROJECT CONTEXT:
 - Project Name: ${projectName}
 - Project Type: ${projectType}
 - App Purpose: ${appGoal}
 
-Use this context to provide highly relevant recommendations!
+STRICT SCOPE - YOU CAN ONLY:
+✅ Scan projects to identify missing visual assets
+✅ Generate logos, icons, banners, illustrations, favicons
+✅ Create social media images (OG, Twitter cards)
+✅ Generate PWA/app icons
+✅ Audit existing visual assets
+✅ Recommend asset improvements
+✅ Create branding packages
 
-IMPORTANT: You have access to REAL functions that you MUST USE to perform actions. Don't just describe what you would do - actually call the functions!
+❌ YOU CANNOT:
+- Write code (except asset imports/references)
+- Debug applications
+- Explain programming concepts
+- Perform general coding tasks
+- Answer non-asset-related questions
+- Modify application logic
+
+If asked to do something outside asset generation, politely decline and redirect to asset-related tasks.
+
+IMPORTANT: You have access to REAL functions that you MUST USE:
 
 Available functions:
-- scanProject: Scan a project directory to analyze codebase and identify asset needs
-- generateAssets: Generate visual assets based on a plan (after scanning)
-- getProjectStatus: Get the current status of the project and generated assets
-- listFiles: List files in a directory to understand project structure
+- scanProject: Scan project to identify missing visual assets
+- generateAssets: Generate visual assets (logos, icons, images)
+- getProjectStatus: Check generated assets status
+- listFiles: Browse project structure for asset analysis
+
+TASK TRACKING:
+Before starting work, display your plan as a checklist:
+- [ ] Task 1
+- [ ] Task 2
+- [x] Task 3 (completed)
+
+Update the checklist as you progress so users see what you're doing.
 
 When a user asks you to:
-- "scan the project/folder" → CALL scanProject function
-- "generate assets/logo/icons" → CALL generateAssets function
+- "scan the project" → CALL scanProject function
+- "generate logo/icons/assets" → CALL generateAssets function
 - "show status" → CALL getProjectStatus function
-- "what files are there" → CALL listFiles function
 
-Always use functions to take real actions. After calling a function, explain the results to the user.
+Always use functions to take real actions. Focus ONLY on visual asset generation.
 
 Current project: ${this.context.projectPath}
 
-Be conversational, helpful, and proactive in suggesting assets that would benefit "${appGoal}".`;
+Suggest assets that would benefit "${appGoal}", but ONLY visual assets.`;
   }
 }
