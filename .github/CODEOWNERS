@@ -1,0 +1,28 @@
+# CODEOWNERS - Code review assignments
+#
+# These owners will be automatically requested for review when someone
+# opens a pull request that modifies files in the specified paths.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - all files
+* @asghar07
+
+# Core functionality - require extra review
+/src/core/ @asghar07
+/src/utils/ @asghar07
+
+# Security-sensitive files - require careful review
+/.github/workflows/ @asghar07
+/SECURITY.md @asghar07
+/.env.example @asghar07
+
+# Package and publishing - critical files
+/package.json @asghar07
+/.npmignore @asghar07
+/tsconfig.json @asghar07
+
+# Documentation - can be more open to contributions
+/docs/ @asghar07
+/README.md @asghar07
+/CONTRIBUTING.md @asghar07
