@@ -111,3 +111,6 @@ service-account-key.json
 # Local configuration overrides (keep base genass.config.json committable)
 .genass.config.json
 genass.config.local.json
+
+# Agent context (project-specific, should not be committed to version control)
+AGENTS.md

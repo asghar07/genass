@@ -766,66 +766,173 @@ Current project: ${projectPath}`
 
   private async runOnboarding(): Promise<void> {
     try {
-      // Detect project type
-      const packageJsonPath = path.join(this.context.projectPath, 'package.json');
-      let projectType = 'unknown';
-      let projectName = path.basename(this.context.projectPath);
+      const agentsFilePath = path.join(this.context.projectPath, 'AGENTS.md');
 
-      if (await fs.pathExists(packageJsonPath)) {
-        const pkg = await fs.readJson(packageJsonPath);
-        projectName = pkg.name || projectName;
+      // Check if AGENTS.md already exists
+      if (await fs.pathExists(agentsFilePath)) {
+        // Load existing context
+        const agentsContent = await fs.readFile(agentsFilePath, 'utf-8');
+        const context = this.parseAgentsFile(agentsContent);
 
-        // Detect framework
-        if (pkg.dependencies?.next || pkg.devDependencies?.next) {
-          projectType = 'Next.js';
-        } else if (pkg.dependencies?.react || pkg.devDependencies?.react) {
-          projectType = 'React';
-        } else if (pkg.dependencies?.vue || pkg.devDependencies?.vue) {
-          projectType = 'Vue.js';
-        } else if (pkg.dependencies?.angular || pkg.devDependencies?.['@angular/core']) {
-          projectType = 'Angular';
-        } else if (pkg.dependencies?.svelte || pkg.devDependencies?.svelte) {
-          projectType = 'Svelte';
+        if (context.appGoal) {
+          console.log(chalk.bold.white('👋 Welcome back!\n'));
+          console.log(chalk.green(`✓ Loaded context from AGENTS.md`));
+          console.log(chalk.gray(`  Project: ${context.projectName}`));
+          console.log(chalk.gray(`  Type: ${context.projectType}`));
+          console.log(chalk.gray(`  Purpose: ${context.appGoal}\n`));
+
+          // Update context
+          this.context.cachedContext = context.appGoal;
+
+          // Update system instruction with loaded context
+          this.updateSystemInstructionWithContext(
+            context.projectType,
+            context.projectName,
+            context.appGoal
+          );
+
+          // Re-initialize model with context
+          this.initializeModel();
+
+          console.log(chalk.gray('Type your request below, or use /help for commands\n'));
+          return;
         }
       }
 
-      // Display detected info
-      console.log(chalk.bold.white('👋 Welcome! Let me learn about your project...\n'));
-
-      if (projectType !== 'unknown') {
-        console.log(chalk.green(`✓ Detected: ${projectType} project`));
-      }
-
-      console.log(chalk.gray(`  Project: ${projectName}\n`));
-
-      // Ask about the app's purpose
-      console.log(chalk.white('To provide the best asset recommendations, tell me:'));
-      console.log(chalk.cyan('What does your app do? (e.g., "It\'s an e-commerce site for selling shoes")\n'));
-
-      // Get user response
-      const appGoal = await this.promptUser('Your app: ');
-
-      if (appGoal && appGoal.trim().length > 0) {
-        // Update context
-        this.context.cachedContext = appGoal.trim();
-
-        // Update system instruction with this context
-        this.updateSystemInstructionWithContext(projectType, projectName, appGoal.trim());
-
-        // Re-initialize model with updated context
-        this.initializeModel();
-
-        console.log(chalk.green('\n✓ Got it! I\'ll keep that in mind for recommendations.\n'));
-      } else {
-        console.log(chalk.yellow('\n⚠️  No problem! I\'ll provide general recommendations.\n'));
-      }
-
-      console.log(chalk.gray('Type your request below, or use /help for commands\n'));
+      // No existing context - run first-time onboarding
+      await this.runFirstTimeOnboarding(agentsFilePath);
 
     } catch (error) {
       logger.warn('Onboarding failed', error);
       // Continue anyway - onboarding is optional
     }
+  }
+
+  private async runFirstTimeOnboarding(agentsFilePath: string): Promise<void> {
+    // Detect project type
+    const packageJsonPath = path.join(this.context.projectPath, 'package.json');
+    let projectType = 'unknown';
+    let projectName = path.basename(this.context.projectPath);
+
+    if (await fs.pathExists(packageJsonPath)) {
+      const pkg = await fs.readJson(packageJsonPath);
+      projectName = pkg.name || projectName;
+
+      // Detect framework
+      if (pkg.dependencies?.next || pkg.devDependencies?.next) {
+        projectType = 'Next.js';
+      } else if (pkg.dependencies?.react || pkg.devDependencies?.react) {
+        projectType = 'React';
+      } else if (pkg.dependencies?.vue || pkg.devDependencies?.vue) {
+        projectType = 'Vue.js';
+      } else if (pkg.dependencies?.angular || pkg.devDependencies?.['@angular/core']) {
+        projectType = 'Angular';
+      } else if (pkg.dependencies?.svelte || pkg.devDependencies?.svelte) {
+        projectType = 'Svelte';
+      }
+    }
+
+    // Display detected info
+    console.log(chalk.bold.white('👋 Welcome! Let me learn about your project...\n'));
+
+    if (projectType !== 'unknown') {
+      console.log(chalk.green(`✓ Detected: ${projectType} project`));
+    }
+
+    console.log(chalk.gray(`  Project: ${projectName}\n`));
+
+    // Ask about the app's purpose
+    console.log(chalk.white('To provide the best asset recommendations, tell me:'));
+    console.log(chalk.cyan('What does your app do? (e.g., "It\'s an e-commerce site for selling shoes")\n'));
+
+    // Get user response
+    const appGoal = await this.promptUser('Your app: ');
+
+    if (appGoal && appGoal.trim().length > 0) {
+      // Save to AGENTS.md
+      await this.saveAgentsFile(agentsFilePath, {
+        projectName,
+        projectType,
+        appGoal: appGoal.trim(),
+        createdAt: new Date().toISOString()
+      });
+
+      // Update context
+      this.context.cachedContext = appGoal.trim();
+
+      // Update system instruction with this context
+      this.updateSystemInstructionWithContext(projectType, projectName, appGoal.trim());
+
+      // Re-initialize model with updated context
+      this.initializeModel();
+
+      console.log(chalk.green('\n✓ Got it! I\'ll remember this for next time.\n'));
+      console.log(chalk.gray(`  Saved to: AGENTS.md\n`));
+    } else {
+      console.log(chalk.yellow('\n⚠️  No problem! I\'ll provide general recommendations.\n'));
+    }
+
+    console.log(chalk.gray('Type your request below, or use /help for commands\n'));
+  }
+
+  private async saveAgentsFile(
+    filePath: string,
+    context: { projectName: string; projectType: string; appGoal: string; createdAt: string }
+  ): Promise<void> {
+    const content = `# GenAss Agent Context
+
+This file contains context about your project for the GenAss AI assistant.
+It helps provide better, more relevant asset recommendations across sessions.
+
+**Do not delete this file** - it helps GenAss remember your project details.
+
+---
+
+## Project Information
+
+**Project Name:** ${context.projectName}
+**Project Type:** ${context.projectType}
+**Created:** ${new Date(context.createdAt).toLocaleString()}
+
+## App Purpose
+
+${context.appGoal}
+
+---
+
+## Notes for GenAss AI
+
+Based on this app's purpose, GenAss should prioritize:
+- Assets that align with the app's goals and target audience
+- Visual styles appropriate for the ${context.projectType} framework
+- Industry-specific visual elements when relevant
+
+## Edit This File
+
+You can edit the "App Purpose" section above to update the context.
+GenAss will use this information in future sessions.
+`;
+
+    await fs.writeFile(filePath, content, 'utf-8');
+    logger.info('Saved agent context to AGENTS.md', { projectName: context.projectName });
+  }
+
+  private parseAgentsFile(content: string): {
+    projectName: string;
+    projectType: string;
+    appGoal: string;
+  } {
+    const projectNameMatch = content.match(/\*\*Project Name:\*\* (.+)/);
+    const projectTypeMatch = content.match(/\*\*Project Type:\*\* (.+)/);
+
+    // Extract app goal (text between "## App Purpose" and "---")
+    const appGoalMatch = content.match(/## App Purpose\s+(.+?)\s+---/s);
+
+    return {
+      projectName: projectNameMatch?.[1]?.trim() || 'Unknown',
+      projectType: projectTypeMatch?.[1]?.trim() || 'Unknown',
+      appGoal: appGoalMatch?.[1]?.trim() || ''
+    };
   }
 
   private async promptUser(message: string): Promise<string> {
