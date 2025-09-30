@@ -1,6 +1,7 @@
 # Development files
 src/
 tsconfig.json
+.eslintrc.json
 
 # Environment and secrets
 .env
@@ -15,6 +16,7 @@ credentials*.json
 *.spec.ts
 __tests__/
 coverage/
+jest.config.js
 
 # Documentation (keep README.md, LICENSE, CHANGELOG.md)
 docs/
