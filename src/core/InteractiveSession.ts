@@ -2,6 +2,7 @@ import { GoogleGenerativeAI, Content, FunctionDeclaration, Tool, SchemaType } fr
 import chalk from 'chalk';
 import readline from 'readline';
 import ora from 'ora';
+import inquirer from 'inquirer';
 import { GenAssManager } from './GenAssManager';
 import { logger } from '../utils/logger';
 import fs from 'fs-extra';
@@ -223,6 +224,20 @@ Current project: ${projectPath}`
         const trimmedInput = input.trim();
 
         if (!trimmedInput) {
+          this.rl.prompt();
+          return;
+        }
+
+        // If user just types "/", show command picker
+        if (trimmedInput === '/') {
+          const command = await this.showCommandPicker();
+          if (command) {
+            const shouldContinue = await this.handleCommand(command);
+            if (!shouldContinue) {
+              resolve();
+              return;
+            }
+          }
           this.rl.prompt();
           return;
         }
@@ -698,6 +713,44 @@ Current project: ${projectPath}`
 
   public getContext(): SessionContext {
     return this.context;
+  }
+
+  private async showCommandPicker(): Promise<string | null> {
+    const commandChoices = [
+      { name: chalk.cyan('/scan     ') + chalk.gray(' - Scan project and create generation plan'), value: '/scan' },
+      { name: chalk.cyan('/logo     ') + chalk.gray(' - Generate professional app logo'), value: '/logo' },
+      { name: chalk.cyan('/icons    ') + chalk.gray(' - Generate complete UI icon set'), value: '/icons' },
+      { name: chalk.cyan('/hero     ') + chalk.gray(' - Generate hero banner image'), value: '/hero' },
+      { name: chalk.cyan('/favicon  ') + chalk.gray(' - Generate favicon package'), value: '/favicon' },
+      { name: chalk.cyan('/social   ') + chalk.gray(' - Generate social media assets'), value: '/social' },
+      { name: chalk.cyan('/branding ') + chalk.gray(' - Complete branding package'), value: '/branding' },
+      { name: chalk.cyan('/pwa      ') + chalk.gray(' - Generate PWA manifest icons'), value: '/pwa' },
+      { name: chalk.cyan('/audit    ') + chalk.gray(' - Audit existing assets'), value: '/audit' },
+      { name: chalk.cyan('/quick    ') + chalk.gray(' - Generate essential assets only'), value: '/quick' },
+      new inquirer.Separator(),
+      { name: chalk.gray('/help     ') + chalk.gray(' - Show available commands'), value: '/help' },
+      { name: chalk.gray('/status   ') + chalk.gray(' - Show session statistics'), value: '/status' },
+      { name: chalk.gray('/clear    ') + chalk.gray(' - Clear conversation history'), value: '/clear' },
+      { name: chalk.gray('/exit     ') + chalk.gray(' - Exit the session'), value: '/exit' },
+    ];
+
+    try {
+      const answer = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'command',
+          message: 'Choose a command:',
+          choices: commandChoices,
+          pageSize: 15,
+          loop: false
+        }
+      ]);
+
+      return answer.command;
+    } catch (error) {
+      // User cancelled (Ctrl+C)
+      return null;
+    }
   }
 
   private completeCommand(line: string): [string[], string] {
