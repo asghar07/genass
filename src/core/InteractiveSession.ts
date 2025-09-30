@@ -106,7 +106,7 @@ Current project: ${projectPath}`
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      prompt: chalk.cyan('genass> '),
+      prompt: '', // Will be set dynamically
       completer: this.completeCommand.bind(this)
     });
 
@@ -216,6 +216,9 @@ Current project: ${projectPath}`
 
     // Run onboarding flow to gather context
     await this.runOnboarding();
+
+    // Set up the fancy prompt
+    await this.updatePrompt();
 
     return new Promise((resolve) => {
       this.rl.prompt();
@@ -713,6 +716,42 @@ Current project: ${projectPath}`
 
   public getContext(): SessionContext {
     return this.context;
+  }
+
+  private async updatePrompt(): Promise<void> {
+    try {
+      // Try to get git branch
+      let gitBranch = '';
+      try {
+        const { execSync } = require('child_process');
+        gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+          cwd: this.context.projectPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'ignore']
+        }).trim();
+      } catch (error) {
+        // Not a git repo or git not available
+      }
+
+      // Build the prompt
+      const projectName = path.basename(this.context.projectPath);
+      const modelName = this.config.model.replace('gemini-', '').replace('-exp', '');
+
+      let promptLine1 = chalk.gray('  ★ ') + chalk.cyan(projectName);
+
+      if (gitBranch) {
+        promptLine1 += chalk.gray(':') + chalk.green(`git:(${gitBranch})`);
+      }
+
+      promptLine1 += chalk.gray(' • ') + chalk.yellow(`ai:(${modelName})`);
+
+      const promptLine2 = chalk.cyan('  >> ') + chalk.gray('type ') + chalk.white('/') + chalk.gray(' for commands (shift+tab to cycle)');
+
+      this.rl.setPrompt('\n' + promptLine1 + '\n' + promptLine2 + '\n  ');
+    } catch (error) {
+      // Fallback to simple prompt
+      this.rl.setPrompt(chalk.cyan('genass> '));
+    }
   }
 
   private async showCommandPicker(): Promise<string | null> {
