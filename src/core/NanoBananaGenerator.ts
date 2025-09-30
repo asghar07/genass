@@ -73,6 +73,122 @@ export class NanoBananaGenerator {
     }
   }
 
+  async generateFromPrompt(
+    prompt: string,
+    options: {
+      outputDir: string;
+      filename?: string;
+      format?: 'png' | 'jpg' | 'webp';
+      dimensions?: { width: number; height: number };
+    }
+  ): Promise<{ success: boolean; filePath?: string; error?: string; cost: number }> {
+    const startTime = Date.now();
+
+    logger.info('Generating image from custom prompt', {
+      prompt: prompt.substring(0, 100),
+      outputDir: options.outputDir
+    });
+
+    try {
+      // Enhance the prompt with quality specifications
+      const enhancedPrompt = `${prompt}
+
+TECHNICAL SPECIFICATIONS:
+- High quality, professional result
+- Clean composition with clear focal point
+- Modern design aesthetic
+- Optimized for digital use
+${options.dimensions ? `- Dimensions: ${options.dimensions.width}x${options.dimensions.height}px` : ''}
+
+QUALITY REQUIREMENTS:
+- Sharp, crisp details
+- Proper lighting and contrast
+- Professional color palette
+- No artifacts or distortions`;
+
+      // Generate the image
+      const dims = options.dimensions || { width: 1024, height: 1024 };
+      const aspectRatio = `${dims.width}:${dims.height}`;
+
+      const imageData = await this.generateWithNanoBanana(
+        enhancedPrompt,
+        {
+          type: 'illustration',
+          description: prompt.substring(0, 50),
+          context: 'custom prompt generation',
+          suggestedPrompt: enhancedPrompt,
+          priority: 'high',
+          dimensions: {
+            ...dims,
+            aspectRatio
+          },
+          usage: ['custom'],
+          filePath: ''
+        },
+        {
+          outputDir: options.outputDir,
+          format: options.format || 'png'
+        }
+      );
+
+      // Save the image
+      await fs.ensureDir(options.outputDir);
+
+      const filename = options.filename || `custom-${Date.now()}`;
+      const format = options.format || 'png';
+      const outputPath = path.join(options.outputDir, `${filename}.${format}`);
+
+      // Process and save
+      let sharpInstance = sharp(imageData.imageData);
+
+      // Resize if dimensions specified
+      if (options.dimensions?.width && options.dimensions?.height) {
+        sharpInstance = sharpInstance.resize(
+          options.dimensions.width,
+          options.dimensions.height,
+          { fit: 'cover' }
+        );
+      }
+
+      // Convert format
+      switch (format) {
+        case 'png':
+          sharpInstance = sharpInstance.png({ quality: 90 });
+          break;
+        case 'jpg':
+          sharpInstance = sharpInstance.jpeg({ quality: 90 });
+          break;
+        case 'webp':
+          sharpInstance = sharpInstance.webp({ quality: 90 });
+          break;
+      }
+
+      await sharpInstance.toFile(outputPath);
+
+      const generationTime = Date.now() - startTime;
+
+      logger.info('Custom image generated successfully', {
+        outputPath,
+        generationTime,
+        cost: this.defaultConfig.costPerGeneration
+      });
+
+      return {
+        success: true,
+        filePath: outputPath,
+        cost: this.defaultConfig.costPerGeneration
+      };
+
+    } catch (error) {
+      logger.error('Custom image generation failed', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        cost: 0
+      };
+    }
+  }
+
   async generateAsset(
     assetNeed: AssetNeed,
     options: GenerationOptions

@@ -118,14 +118,50 @@ genass chat --path /path/to/project
 - `/pwa` - Generate PWA manifest icons
 - `/audit` - Audit existing assets for quality/consistency
 - `/quick` - Generate essential assets only (fast launch)
+- `/prompt` - **Generate ANY image from custom prompt** 🆕
+- `/inject` - Show code snippets for generated assets
+- `/regenerate` - Force regenerate all (ignore existing)
+- `/costs` - View cost tracking and budget
 
 **Example interactions:**
 ```
 genass> /scan                    # Quick project scan
 genass> /logo                    # Generate logo instantly
+genass> /prompt                  # Generate ANY custom image!
 genass> /branding                # Complete branding package
 genass> What icons do I need?    # Natural language still works!
 ```
+
+### Custom Prompt Generation 🆕
+
+Generate **any image** from a custom prompt:
+
+```bash
+genass> /prompt
+
+🎨 Custom Image Generation
+
+Your prompt: A futuristic dashboard with holographic charts and data visualizations
+
+Filename (default: auto-generated): dashboard-preview
+Width in pixels (default: 1024): 1920
+Height in pixels (default: 1024): 1080
+
+⚡ Generating image...
+✔ Image generated successfully!
+
+✓ Generated: generated-assets/custom/dashboard-preview.png
+  Size: 1920x1080px
+  Cost: $0.039
+```
+
+**Use cases:**
+- Hero images with specific themes
+- Custom illustrations for features
+- Unique backgrounds
+- Marketing visuals
+- Placeholder images
+- Any creative visual you need!
 
 ### Command Mode
 

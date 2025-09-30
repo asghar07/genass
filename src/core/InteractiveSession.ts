@@ -377,6 +377,11 @@ Current project: ${projectPath}`
         await this.processUserInput('Scan my project and regenerate ALL visual assets, even if they already exist. I want to replace existing assets with new AI-generated ones.');
         return true;
 
+      case '/prompt':
+      case '/generate':
+        await this.handleCustomPrompt();
+        return true;
+
       default:
         console.log(chalk.red(`Unknown command: ${cmd}`));
         console.log(chalk.gray('Type /help for available commands\n'));
@@ -405,6 +410,7 @@ Current project: ${projectPath}`
     console.log(chalk.cyan('  /quick    ') + chalk.gray(' - Generate essential assets only'));
     console.log(chalk.cyan('  /inject   ') + chalk.gray(' - Inject generated assets into code'));
     console.log(chalk.cyan('  /regenerate') + chalk.gray(' - Force regenerate all (ignore existing)'));
+    console.log(chalk.cyan('  /prompt   ') + chalk.gray(' - Generate custom image from any prompt'));
 
     console.log(chalk.bold('\n💬 Natural Language:\n'));
     console.log(chalk.gray('  You can also chat naturally:'));
@@ -776,6 +782,75 @@ Current project: ${projectPath}`
     return this.context;
   }
 
+  private async handleCustomPrompt(): Promise<void> {
+    try {
+      console.log(chalk.bold.white('\n🎨 Custom Image Generation\n'));
+      console.log(chalk.gray('Describe the image you want to generate in detail.\n'));
+
+      const prompt = await this.promptUser('Your prompt: ');
+
+      if (!prompt || prompt.trim().length === 0) {
+        console.log(chalk.yellow('⚠️  No prompt provided. Cancelled.\n'));
+        return;
+      }
+
+      console.log(chalk.gray('\nOptional settings (press Enter to skip):\n'));
+
+      const filename = await this.promptUser('Filename (default: auto-generated): ');
+      const widthStr = await this.promptUser('Width in pixels (default: 1024): ');
+      const heightStr = await this.promptUser('Height in pixels (default: 1024): ');
+
+      const width = parseInt(widthStr) || 1024;
+      const height = parseInt(heightStr) || 1024;
+
+      console.log(chalk.cyan('\n⚡ Generating image...\n'));
+
+      const spinner = ora('Creating your image with Nano Banana...').start();
+
+      // Initialize generator if needed
+      const generator = new (await import('./NanoBananaGenerator')).NanoBananaGenerator();
+      await generator.initialize();
+
+      const outputDir = path.join(this.context.projectPath, 'generated-assets', 'custom');
+
+      const result = await generator.generateFromPrompt(prompt.trim(), {
+        outputDir,
+        filename: filename.trim() || undefined,
+        format: 'png',
+        dimensions: { width, height }
+      });
+
+      if (result.success && result.filePath) {
+        spinner.succeed('Image generated successfully!');
+
+        const relativePath = path.relative(this.context.projectPath, result.filePath);
+        console.log(chalk.green('\n✓ Generated: ') + chalk.white(relativePath));
+        console.log(chalk.gray(`  Size: ${width}x${height}px`));
+        console.log(chalk.gray(`  Cost: $${result.cost.toFixed(3)}`));
+        console.log(chalk.gray(`  Location: ${result.filePath}\n`));
+
+        // Track cost
+        await this.costTracker.trackCost({
+          timestamp: new Date().toISOString(),
+          operation: 'custom-prompt-generation',
+          cost: result.cost,
+          assetsGenerated: 1,
+          model: this.config.model
+        });
+
+        this.context.totalCost += result.cost;
+
+      } else {
+        spinner.fail('Generation failed');
+        console.log(chalk.red('\n✗ Error: ') + chalk.gray(result.error || 'Unknown error\n'));
+      }
+
+    } catch (error) {
+      console.error(chalk.red('\n✗ Custom generation failed:'), error instanceof Error ? error.message : 'Unknown error');
+      logger.error('Custom prompt generation failed', error);
+    }
+  }
+
   private async injectGeneratedAssets(): Promise<void> {
     try {
       const publicAssetsDir = path.join(this.context.projectPath, 'public/assets');
@@ -903,6 +978,7 @@ Current project: ${projectPath}`
       { name: chalk.cyan('/quick    ') + chalk.gray(' - Generate essential assets only'), value: '/quick' },
       { name: chalk.cyan('/inject   ') + chalk.gray(' - Inject generated assets into code'), value: '/inject' },
       { name: chalk.cyan('/regenerate') + chalk.gray(' - Force regenerate all assets (ignore existing)'), value: '/regenerate' },
+      { name: chalk.cyan('/prompt   ') + chalk.gray(' - Generate custom image from any prompt'), value: '/prompt' },
       new inquirer.Separator(),
       { name: chalk.gray('/help     ') + chalk.gray(' - Show available commands'), value: '/help' },
       { name: chalk.gray('/status   ') + chalk.gray(' - Show session statistics'), value: '/status' },
@@ -951,7 +1027,9 @@ Current project: ${projectPath}`
       '/quick',
       '/pwa',
       '/inject',
-      '/regenerate'
+      '/regenerate',
+      '/prompt',
+      '/generate'
     ];
 
     // Only provide completions if line starts with /
