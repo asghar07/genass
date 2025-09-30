@@ -50,7 +50,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "github:asghar07/genass"
+    "url": "git+https://github.com/asghar07/genass.git"
   },
   "homepage": "https://github.com/asghar07/genass",
   "bugs": {
