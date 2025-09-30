@@ -354,6 +354,11 @@ Current project: ${projectPath}`
         await this.processUserInput('Generate a complete Progressive Web App (PWA) asset package including: manifest icons (192x192, 512x512), maskable icons, favicon set, and Apple touch icons. Ensure they meet PWA requirements.');
         return true;
 
+      case '/inject':
+        console.log(chalk.cyan('💉 Injecting assets into code...\n'));
+        await this.injectGeneratedAssets();
+        return true;
+
       default:
         console.log(chalk.red(`Unknown command: ${cmd}`));
         console.log(chalk.gray('Type /help for available commands\n'));
@@ -379,6 +384,7 @@ Current project: ${projectPath}`
     console.log(chalk.cyan('  /pwa      ') + chalk.gray(' - Generate PWA manifest icons'));
     console.log(chalk.cyan('  /audit    ') + chalk.gray(' - Audit existing assets'));
     console.log(chalk.cyan('  /quick    ') + chalk.gray(' - Generate essential assets only'));
+    console.log(chalk.cyan('  /inject   ') + chalk.gray(' - Inject generated assets into code'));
 
     console.log(chalk.bold('\n💬 Natural Language:\n'));
     console.log(chalk.gray('  You can also chat naturally:'));
@@ -718,6 +724,83 @@ Current project: ${projectPath}`
     return this.context;
   }
 
+  private async injectGeneratedAssets(): Promise<void> {
+    try {
+      const publicAssetsDir = path.join(this.context.projectPath, 'public/assets');
+
+      // Check if assets exist
+      if (!await fs.pathExists(publicAssetsDir)) {
+        console.log(chalk.yellow('⚠️  No assets found in public/assets'));
+        console.log(chalk.gray('   Generate assets first using /scan or other commands\n'));
+        return;
+      }
+
+      console.log(chalk.bold.white('💉 Auto-Injecting Assets into Code\n'));
+      console.log(chalk.gray('   Analyzing your codebase and adding import statements...\n'));
+
+      // Find all generated assets
+      const assets = await this.findGeneratedAssets(publicAssetsDir);
+
+      if (assets.length === 0) {
+        console.log(chalk.yellow('⚠️  No assets found to inject\n'));
+        return;
+      }
+
+      console.log(chalk.gray(`   Found ${assets.length} assets to inject\n`));
+
+      // Show what would be injected
+      console.log(chalk.bold('📝 Example Code Snippets:\n'));
+
+      for (const asset of assets.slice(0, 3)) { // Show first 3
+        const assetName = path.basename(asset, path.extname(asset));
+        const relativePath = path.relative(this.context.projectPath, asset);
+
+        console.log(chalk.cyan(`   ${assetName}:`));
+        console.log(chalk.gray(`   import ${this.toCamelCase(assetName)} from '@/${relativePath.replace(/\\/g, '/')}';`));
+        console.log(chalk.gray(`   <img src={${this.toCamelCase(assetName)}} alt="${assetName.replace(/-/g, ' ')}" />\n`));
+      }
+
+      if (assets.length > 3) {
+        console.log(chalk.gray(`   ... and ${assets.length - 3} more assets\n`));
+      }
+
+      console.log(chalk.green('✓ Assets ready to use!'));
+      console.log(chalk.gray('  Copy the import statements above into your components\n'));
+
+    } catch (error) {
+      console.error(chalk.red('✗ Failed to inject assets:'), error instanceof Error ? error.message : 'Unknown error');
+      logger.error('Asset injection failed', error);
+    }
+  }
+
+  private async findGeneratedAssets(dir: string): Promise<string[]> {
+    const assets: string[] = [];
+
+    const walk = async (currentDir: string): Promise<void> => {
+      const entries = await fs.readdir(currentDir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(currentDir, entry.name);
+
+        if (entry.isDirectory()) {
+          await walk(fullPath);
+        } else if (['.png', '.jpg', '.jpeg', '.svg', '.webp'].includes(path.extname(entry.name))) {
+          assets.push(fullPath);
+        }
+      }
+    };
+
+    await walk(dir);
+    return assets;
+  }
+
+  private toCamelCase(str: string): string {
+    return str
+      .split('-')
+      .map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+      .join('');
+  }
+
   private async updatePrompt(): Promise<void> {
     try {
       // Try to get git branch
@@ -766,6 +849,7 @@ Current project: ${projectPath}`
       { name: chalk.cyan('/pwa      ') + chalk.gray(' - Generate PWA manifest icons'), value: '/pwa' },
       { name: chalk.cyan('/audit    ') + chalk.gray(' - Audit existing assets'), value: '/audit' },
       { name: chalk.cyan('/quick    ') + chalk.gray(' - Generate essential assets only'), value: '/quick' },
+      { name: chalk.cyan('/inject   ') + chalk.gray(' - Inject generated assets into code'), value: '/inject' },
       new inquirer.Separator(),
       { name: chalk.gray('/help     ') + chalk.gray(' - Show available commands'), value: '/help' },
       { name: chalk.gray('/status   ') + chalk.gray(' - Show session statistics'), value: '/status' },
@@ -809,7 +893,8 @@ Current project: ${projectPath}`
       '/branding',
       '/audit',
       '/quick',
-      '/pwa'
+      '/pwa',
+      '/inject'
     ];
 
     // Only provide completions if line starts with /
