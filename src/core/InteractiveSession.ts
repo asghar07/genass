@@ -728,8 +728,8 @@ Current project: ${projectPath}`
     // Filter commands that match the current input
     const hits = commands.filter((cmd) => cmd.startsWith(line));
 
-    // Return matching commands, or all commands if no match
-    return [hits.length > 0 ? hits : commands, line];
+    // Return matching commands (empty array if no matches)
+    return [hits, line];
   }
 
   private displayTaskList(tasks: Array<{ id: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'failed' }>): void {
