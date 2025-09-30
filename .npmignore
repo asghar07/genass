@@ -1,0 +1,48 @@
+# Development files
+src/
+tsconfig.json
+.env
+.env.example
+
+# Tests
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Documentation (keep README.md)
+docs/
+CONTRIBUTING.md
+INSTALL.md
+
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Examples (optional - could include)
+examples/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Test outputs
+test-output/
+generated-assets/
+
+# Scripts
+setup.sh
+test-install.js
+
+# OS
+.DS_Store
+Thumbs.db

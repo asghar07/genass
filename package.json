@@ -12,7 +12,14 @@
     "start": "node dist/cli.js",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm test",
+    "version": "npm run build",
+    "postversion": "git push && git push --tags",
+    "release:patch": "npm version patch -m \"Release v%s\"",
+    "release:minor": "npm version minor -m \"Release v%s\"",
+    "release:major": "npm version major -m \"Release v%s\"",
+    "publish:npm": "npm publish --access public"
   },
   "keywords": [
     "ai",

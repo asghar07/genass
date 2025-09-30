@@ -310,13 +310,41 @@ GenAss automatically optimizes for your framework:
 - **React Native**: Multiple resolution variants for different screen densities
 - **Angular**: Material Design compliance when Material UI is detected
 
-## 💰 Cost Estimation
+## 💰 Cost Tracking & Budget Management
 
-GenAss provides transparent cost estimation with Google's competitive pricing:
+GenAss provides transparent cost tracking with built-in budget limits:
 
 - **Nano Banana (Gemini 2.5 Flash Image)**: $0.039 per generated image
 - **Gemini API**: Efficient usage-based pricing for analysis and planning
-- **Batch Optimization**: Intelligent processing reduces overall costs
+- **Automatic tracking**: All costs saved to `~/.genass/costs.json`
+- **Budget alerts**: Get warned when approaching monthly limit
+
+### View Costs
+
+```bash
+genass> /costs
+
+💰 Cost Summary:
+
+  Total spent:    $2.45
+  Total assets:   63
+  Avg per asset:  $0.039
+
+  Today:          $0.12
+  This week:      $0.89
+  This month:     $2.45
+
+  Total ops:      45
+
+✓ Within budget: $7.55 remaining this month
+```
+
+### Set Budget Limit
+
+```bash
+# Set monthly budget limit (default: $10)
+MONTHLY_BUDGET_LIMIT=25.0 genass
+```
 
 Example cost for a typical project:
 - 10 icons + 2 logos + 1 banner = ~$0.51 (13 × $0.039)
@@ -351,6 +379,14 @@ npm run dev
 # Run tests
 npm test
 ```
+
+## 📚 Documentation
+
+- **[User Guide](docs/USER_GUIDE.md)** - Complete usage guide with examples
+- **[API Documentation](docs/API.md)** - Programmatic API reference
+- **[Publishing Guide](docs/PUBLISHING.md)** - How to publish/release
+- **[Examples](docs/examples/)** - Code examples and tutorials
+- **[CHANGELOG](CHANGELOG.md)** - Version history and changes
 
 ## 📄 License
 

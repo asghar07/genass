@@ -5,6 +5,7 @@ import ora from 'ora';
 import inquirer from 'inquirer';
 import { GenAssManager } from './GenAssManager';
 import { logger } from '../utils/logger';
+import { CostTracker } from '../utils/CostTracker';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -39,6 +40,7 @@ export class InteractiveSession {
   private model: any;
   private chat: any;
   private tools: Tool[];
+  private costTracker: CostTracker;
 
   constructor(projectPath: string = process.cwd()) {
     if (!process.env.GEMINI_API_KEY) {
@@ -46,6 +48,7 @@ export class InteractiveSession {
     }
 
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    this.costTracker = new CostTracker(parseFloat(process.env.MONTHLY_BUDGET_LIMIT || '10.0'));
 
     this.config = {
       model: 'gemini-2.0-flash-exp',
@@ -277,7 +280,12 @@ Current project: ${projectPath}`
         return true;
 
       case '/status':
-        this.displayStatus();
+        await this.displayStatus();
+        return true;
+
+      case '/costs':
+      case '/budget':
+        await this.displayCostSummary();
         return true;
 
       case '/clear':
@@ -380,6 +388,7 @@ Current project: ${projectPath}`
     console.log(chalk.bold('\n📚 Session Commands:\n'));
     console.log(chalk.cyan('  /help   ') + chalk.gray(' - Show this help message'));
     console.log(chalk.cyan('  /status ') + chalk.gray(' - Show session statistics'));
+    console.log(chalk.cyan('  /costs  ') + chalk.gray(' - Show cost summary and budget'));
     console.log(chalk.cyan('  /clear  ') + chalk.gray(' - Clear conversation history'));
     console.log(chalk.cyan('  /exit   ') + chalk.gray(' - Exit the interactive session'));
 
@@ -406,7 +415,7 @@ Current project: ${projectPath}`
     console.log();
   }
 
-  private displayStatus(): void {
+  private async displayStatus(): Promise<void> {
     const uptime = Math.floor((Date.now() - this.context.sessionStartTime) / 1000);
     const minutes = Math.floor(uptime / 60);
     const seconds = uptime % 60;
@@ -418,8 +427,40 @@ Current project: ${projectPath}`
     console.log(chalk.gray('  Messages:       ') + chalk.white(Math.floor(this.context.conversationHistory.length / 2)));
     console.log(chalk.gray('  Context cache:  ') + chalk.white(this.config.enableContextCaching ? 'Enabled' : 'Disabled'));
     console.log(chalk.gray('  Tokens used:    ') + chalk.white(this.context.totalTokensUsed.toLocaleString()));
-    console.log(chalk.gray('  Estimated cost: ') + chalk.white(`$${this.context.totalCost.toFixed(4)}`));
+    console.log(chalk.gray('  Session cost:   ') + chalk.white(`$${this.context.totalCost.toFixed(4)}`));
+
+    // Show budget status
+    const budgetStatus = await this.costTracker.checkBudget();
+    const budgetColor = budgetStatus.withinBudget ? chalk.green : chalk.red;
+    console.log(chalk.gray('  Monthly budget: ') + budgetColor(`$${budgetStatus.used.toFixed(2)} / $${budgetStatus.limit.toFixed(2)}`));
+
     console.log();
+  }
+
+  private async displayCostSummary(): Promise<void> {
+    const summary = await this.costTracker.getCostSummary();
+
+    console.log(chalk.bold('\n💰 Cost Summary:\n'));
+    console.log(chalk.gray('  Total spent:    ') + chalk.white(`$${summary.totalCost.toFixed(2)}`));
+    console.log(chalk.gray('  Total assets:   ') + chalk.white(summary.totalAssets.toString()));
+    console.log(chalk.gray('  Avg per asset:  ') + chalk.white(`$${summary.averageCostPerAsset.toFixed(3)}`));
+    console.log();
+    console.log(chalk.gray('  Today:          ') + chalk.cyan(`$${summary.today.toFixed(2)}`));
+    console.log(chalk.gray('  This week:      ') + chalk.cyan(`$${summary.thisWeek.toFixed(2)}`));
+    console.log(chalk.gray('  This month:     ') + chalk.cyan(`$${summary.thisMonth.toFixed(2)}`));
+    console.log();
+    console.log(chalk.gray('  Total ops:      ') + chalk.white(summary.totalOperations.toString()));
+    console.log();
+
+    // Budget warning
+    const budgetStatus = await this.costTracker.checkBudget();
+    if (!budgetStatus.withinBudget) {
+      console.log(chalk.red('⚠️  Monthly budget limit exceeded!'));
+      console.log(chalk.gray(`   Used: $${budgetStatus.used.toFixed(2)} / Limit: $${budgetStatus.limit.toFixed(2)}\n`));
+    } else {
+      const remaining = budgetStatus.limit - budgetStatus.used;
+      console.log(chalk.green(`✓ Within budget: $${remaining.toFixed(2)} remaining this month\n`));
+    }
   }
 
   private displaySessionSummary(): void {
@@ -865,6 +906,7 @@ Current project: ${projectPath}`
       new inquirer.Separator(),
       { name: chalk.gray('/help     ') + chalk.gray(' - Show available commands'), value: '/help' },
       { name: chalk.gray('/status   ') + chalk.gray(' - Show session statistics'), value: '/status' },
+      { name: chalk.gray('/costs    ') + chalk.gray(' - Show cost summary and budget'), value: '/costs' },
       { name: chalk.gray('/clear    ') + chalk.gray(' - Clear conversation history'), value: '/clear' },
       { name: chalk.gray('/exit     ') + chalk.gray(' - Exit the session'), value: '/exit' },
     ];
@@ -893,6 +935,8 @@ Current project: ${projectPath}`
     const commands = [
       '/help',
       '/status',
+      '/costs',
+      '/budget',
       '/clear',
       '/exit',
       '/quit',
