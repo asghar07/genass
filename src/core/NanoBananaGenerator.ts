@@ -80,6 +80,7 @@ export class NanoBananaGenerator {
       filename?: string;
       format?: 'png' | 'jpg' | 'webp';
       dimensions?: { width: number; height: number };
+      referenceImage?: string;
     }
   ): Promise<{ success: boolean; filePath?: string; error?: string; cost: number }> {
     const startTime = Date.now();
@@ -91,7 +92,7 @@ export class NanoBananaGenerator {
 
     try {
       // Enhance the prompt with quality specifications
-      const enhancedPrompt = `${prompt}
+      let enhancedPrompt = `${prompt}
 
 TECHNICAL SPECIFICATIONS:
 - High quality, professional result
@@ -106,9 +107,29 @@ QUALITY REQUIREMENTS:
 - Professional color palette
 - No artifacts or distortions`;
 
+      // If reference image provided, add style matching instructions
+      if (options.referenceImage) {
+        enhancedPrompt += `
+
+STYLE REFERENCE:
+- Use the reference image as inspiration for colors, style, and composition
+- Maintain visual consistency with the reference
+- Adapt the style to the new subject matter`;
+      }
+
       // Generate the image
       const dims = options.dimensions || { width: 1024, height: 1024 };
       const aspectRatio = `${dims.width}:${dims.height}`;
+
+      const generationOptions: GenerationOptions = {
+        outputDir: options.outputDir,
+        format: options.format || 'png'
+      };
+
+      // Add reference image if provided
+      if (options.referenceImage) {
+        generationOptions.blendImages = [options.referenceImage];
+      }
 
       const imageData = await this.generateWithNanoBanana(
         enhancedPrompt,
@@ -125,10 +146,7 @@ QUALITY REQUIREMENTS:
           usage: ['custom'],
           filePath: ''
         },
-        {
-          outputDir: options.outputDir,
-          format: options.format || 'png'
-        }
+        generationOptions
       );
 
       // Save the image

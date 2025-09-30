@@ -6,6 +6,7 @@ import inquirer from 'inquirer';
 import { GenAssManager } from './GenAssManager';
 import { logger } from '../utils/logger';
 import { CostTracker } from '../utils/CostTracker';
+import { ImageSearcher } from './ImageSearcher';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -41,6 +42,7 @@ export class InteractiveSession {
   private chat: any;
   private tools: Tool[];
   private costTracker: CostTracker;
+  private imageSearcher: ImageSearcher;
 
   constructor(projectPath: string = process.cwd()) {
     if (!process.env.GEMINI_API_KEY) {
@@ -49,6 +51,7 @@ export class InteractiveSession {
 
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     this.costTracker = new CostTracker(parseFloat(process.env.MONTHLY_BUDGET_LIMIT || '10.0'));
+    this.imageSearcher = new ImageSearcher();
 
     this.config = {
       model: 'gemini-2.0-flash-exp',
@@ -786,6 +789,7 @@ Current project: ${projectPath}`
     try {
       console.log(chalk.bold.white('\n🎨 Custom Image Generation\n'));
       console.log(chalk.gray('Describe the image you want to generate in detail.\n'));
+      console.log(chalk.gray('💡 Tip: Mention existing images (e.g., "based on my logo") to use them as reference\n'));
 
       const prompt = await this.promptUser('Your prompt: ');
 
@@ -794,7 +798,43 @@ Current project: ${projectPath}`
         return;
       }
 
-      console.log(chalk.gray('\nOptional settings (press Enter to skip):\n'));
+      // Detect image references in prompt
+      const imageReferences = this.imageSearcher.detectImageReferences(prompt);
+      let referenceImage: string | null = null;
+
+      if (imageReferences.length > 0) {
+        console.log(chalk.cyan(`\n🔍 Detected image references: ${imageReferences.slice(0, 3).join(', ')}`));
+        console.log(chalk.gray('   Searching project for matching images...\n'));
+
+        const assetDirs = ['public', 'assets', 'static', 'src/assets', 'images'];
+        const foundImages = await this.imageSearcher.searchForImages(
+          this.context.projectPath,
+          imageReferences,
+          assetDirs
+        );
+
+        if (foundImages.length > 0) {
+          const bestMatch = await this.imageSearcher.selectBestMatch(foundImages);
+
+          if (bestMatch) {
+            const relativePath = path.relative(this.context.projectPath, bestMatch.path);
+            console.log(chalk.green(`✓ Found reference image: ${relativePath}`));
+            console.log(chalk.gray(`  Match: ${bestMatch.matchReason}\n`));
+
+            referenceImage = bestMatch.path;
+
+            // Show other matches if multiple found
+            if (foundImages.length > 1) {
+              console.log(chalk.gray(`  Also found ${foundImages.length - 1} other matches\n`));
+            }
+          }
+        } else {
+          console.log(chalk.yellow('⚠️  No matching images found in project'));
+          console.log(chalk.gray('   Proceeding without reference image\n'));
+        }
+      }
+
+      console.log(chalk.gray('Optional settings (press Enter to skip):\n'));
 
       const filename = await this.promptUser('Filename (default: auto-generated): ');
       const widthStr = await this.promptUser('Width in pixels (default: 1024): ');
@@ -804,6 +844,10 @@ Current project: ${projectPath}`
       const height = parseInt(heightStr) || 1024;
 
       console.log(chalk.cyan('\n⚡ Generating image...\n'));
+
+      if (referenceImage) {
+        console.log(chalk.gray(`   Using reference: ${path.basename(referenceImage)}\n`));
+      }
 
       const spinner = ora('Creating your image with Nano Banana...').start();
 
@@ -817,7 +861,8 @@ Current project: ${projectPath}`
         outputDir,
         filename: filename.trim() || undefined,
         format: 'png',
-        dimensions: { width, height }
+        dimensions: { width, height },
+        referenceImage: referenceImage || undefined
       });
 
       if (result.success && result.filePath) {
