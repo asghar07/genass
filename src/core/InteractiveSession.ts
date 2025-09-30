@@ -105,7 +105,8 @@ Current project: ${projectPath}`
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      prompt: chalk.cyan('genass> ')
+      prompt: chalk.cyan('genass> '),
+      completer: this.completeCommand.bind(this)
     });
 
     // Define function declarations for the AI
@@ -697,6 +698,38 @@ Current project: ${projectPath}`
 
   public getContext(): SessionContext {
     return this.context;
+  }
+
+  private completeCommand(line: string): [string[], string] {
+    // List of all available commands
+    const commands = [
+      '/help',
+      '/status',
+      '/clear',
+      '/exit',
+      '/quit',
+      '/scan',
+      '/logo',
+      '/icons',
+      '/hero',
+      '/favicon',
+      '/social',
+      '/branding',
+      '/audit',
+      '/quick',
+      '/pwa'
+    ];
+
+    // Only provide completions if line starts with /
+    if (!line.startsWith('/')) {
+      return [[], line];
+    }
+
+    // Filter commands that match the current input
+    const hits = commands.filter((cmd) => cmd.startsWith(line));
+
+    // Return matching commands, or all commands if no match
+    return [hits.length > 0 ? hits : commands, line];
   }
 
   private displayTaskList(tasks: Array<{ id: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'failed' }>): void {
