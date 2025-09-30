@@ -101,18 +101,30 @@ genass chat --path /path/to/project
 - 📊 **Session tracking** - Token usage, costs, and statistics
 - 🎨 **Rich UI** - Beautiful formatting with colors and progress indicators
 
-**Available commands within interactive session:**
-- `/help` - Show available commands
+**Session commands:**
+- `/help` - Show all available commands
 - `/status` - Display session statistics
 - `/clear` - Clear conversation history
 - `/exit` - Exit the session
 
+**⚡ Quick Action Commands (Pre-engineered Prompts):**
+- `/scan` - Scan project and create generation plan
+- `/logo` - Generate professional app logo
+- `/icons` - Generate complete UI icon set
+- `/hero` - Generate hero banner image
+- `/favicon` - Generate favicon package
+- `/social` - Generate social media assets (OG images, Twitter cards)
+- `/branding` - Complete branding package (logo, icons, social assets)
+- `/pwa` - Generate PWA manifest icons
+- `/audit` - Audit existing assets for quality/consistency
+- `/quick` - Generate essential assets only (fast launch)
+
 **Example interactions:**
 ```
-genass> Scan my project and find missing assets
-genass> Generate a modern logo for my React app
-genass> What's the status of my generated assets?
-genass> Create icons for my mobile app
+genass> /scan                    # Quick project scan
+genass> /logo                    # Generate logo instantly
+genass> /branding                # Complete branding package
+genass> What icons do I need?    # Natural language still works!
 ```
 
 ### Command Mode

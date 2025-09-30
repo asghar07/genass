@@ -245,6 +245,57 @@ Current project: ${projectPath}`
         this.rl.close();
         return false;
 
+      // Quick action commands with prebuilt prompts
+      case '/scan':
+        console.log(chalk.cyan('🔍 Running quick scan...\n'));
+        await this.processUserInput('Scan my project thoroughly, analyze the codebase, identify all missing assets, and create a comprehensive generation plan. Show me what assets are needed and why.');
+        return true;
+
+      case '/logo':
+        console.log(chalk.cyan('🎨 Generating logo...\n'));
+        await this.processUserInput('Generate a professional, modern logo for my app that reflects its purpose and brand identity. Make it versatile for use across different platforms and sizes. Include both full logo and icon variants.');
+        return true;
+
+      case '/icons':
+        console.log(chalk.cyan('✨ Generating UI icons...\n'));
+        await this.processUserInput('Generate a complete set of UI icons for my app including: navigation icons, action buttons, status indicators, and common interface elements. Ensure consistent style and sizing across all icons.');
+        return true;
+
+      case '/hero':
+        console.log(chalk.cyan('🖼️  Generating hero image...\n'));
+        await this.processUserInput('Create an eye-catching hero banner image for the landing page that visually represents the app\'s core value proposition. Make it modern, professional, and aligned with current design trends.');
+        return true;
+
+      case '/favicon':
+        console.log(chalk.cyan('⭐ Generating favicon set...\n'));
+        await this.processUserInput('Generate a complete favicon package including: 16x16, 32x32, 180x180 (Apple touch), and 512x512 sizes. Ensure the design is recognizable at small sizes and works on both light and dark backgrounds.');
+        return true;
+
+      case '/social':
+        console.log(chalk.cyan('📱 Generating social media assets...\n'));
+        await this.processUserInput('Create optimized social media assets including: Open Graph image (1200x630), Twitter card image, and LinkedIn preview. Design them to be attention-grabbing when shared on social platforms.');
+        return true;
+
+      case '/branding':
+        console.log(chalk.cyan('🎯 Creating complete branding package...\n'));
+        await this.processUserInput('Generate a complete branding asset package for my app including: primary logo, secondary logo mark, favicon set, social media assets, app icons for multiple platforms, and brand illustrations. Ensure visual consistency across all assets.');
+        return true;
+
+      case '/audit':
+        console.log(chalk.cyan('🔎 Auditing existing assets...\n'));
+        await this.processUserInput('Analyze all existing assets in my project. Check for: missing assets, inconsistent sizing, quality issues, outdated designs, and assets that could be improved or replaced. Provide a detailed report with recommendations.');
+        return true;
+
+      case '/quick':
+        console.log(chalk.cyan('⚡ Quick essentials...\n'));
+        await this.processUserInput('Generate only the essential assets needed to launch: app logo, favicon, and one hero/banner image. Focus on speed while maintaining quality.');
+        return true;
+
+      case '/pwa':
+        console.log(chalk.cyan('📲 Generating PWA assets...\n'));
+        await this.processUserInput('Generate a complete Progressive Web App (PWA) asset package including: manifest icons (192x192, 512x512), maskable icons, favicon set, and Apple touch icons. Ensure they meet PWA requirements.');
+        return true;
+
       default:
         console.log(chalk.red(`Unknown command: ${cmd}`));
         console.log(chalk.gray('Type /help for available commands\n'));
@@ -253,17 +304,30 @@ Current project: ${projectPath}`
   }
 
   private displayHelp(): void {
-    console.log(chalk.bold('\n📚 Available Commands:\n'));
-    console.log(chalk.cyan('  /help') + chalk.gray('    - Show this help message'));
-    console.log(chalk.cyan('  /status') + chalk.gray('  - Show session statistics and context info'));
-    console.log(chalk.cyan('  /clear') + chalk.gray('   - Clear conversation history'));
-    console.log(chalk.cyan('  /exit') + chalk.gray('    - Exit the interactive session'));
+    console.log(chalk.bold('\n📚 Session Commands:\n'));
+    console.log(chalk.cyan('  /help   ') + chalk.gray(' - Show this help message'));
+    console.log(chalk.cyan('  /status ') + chalk.gray(' - Show session statistics'));
+    console.log(chalk.cyan('  /clear  ') + chalk.gray(' - Clear conversation history'));
+    console.log(chalk.cyan('  /exit   ') + chalk.gray(' - Exit the interactive session'));
 
-    console.log(chalk.bold('\n💡 Examples:\n'));
-    console.log(chalk.gray('  • "Scan my project and find missing assets"'));
-    console.log(chalk.gray('  • "Generate a logo for my app"'));
-    console.log(chalk.gray('  • "What assets do I need for a React app?"'));
-    console.log(chalk.gray('  • "Show me the status of my generated assets"'));
+    console.log(chalk.bold('\n⚡ Quick Action Commands:\n'));
+    console.log(chalk.cyan('  /scan     ') + chalk.gray(' - Scan project and create generation plan'));
+    console.log(chalk.cyan('  /logo     ') + chalk.gray(' - Generate app logo'));
+    console.log(chalk.cyan('  /icons    ') + chalk.gray(' - Generate complete UI icon set'));
+    console.log(chalk.cyan('  /hero     ') + chalk.gray(' - Generate hero banner image'));
+    console.log(chalk.cyan('  /favicon  ') + chalk.gray(' - Generate favicon package'));
+    console.log(chalk.cyan('  /social   ') + chalk.gray(' - Generate social media assets'));
+    console.log(chalk.cyan('  /branding ') + chalk.gray(' - Complete branding package'));
+    console.log(chalk.cyan('  /pwa      ') + chalk.gray(' - Generate PWA manifest icons'));
+    console.log(chalk.cyan('  /audit    ') + chalk.gray(' - Audit existing assets'));
+    console.log(chalk.cyan('  /quick    ') + chalk.gray(' - Generate essential assets only'));
+
+    console.log(chalk.bold('\n💬 Natural Language:\n'));
+    console.log(chalk.gray('  You can also chat naturally:'));
+    console.log(chalk.gray('  • "What assets does my app need?"'));
+    console.log(chalk.gray('  • "Create a minimalist logo"'));
+    console.log(chalk.gray('  • "Generate icons for my dashboard"'));
+    console.log(chalk.gray('  • "Show me what you can do"'));
     console.log();
   }
 
