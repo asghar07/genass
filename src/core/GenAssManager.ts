@@ -8,6 +8,7 @@ import { AssetAnalyzer } from './AssetAnalyzer';
 import { GeminiOrchestrator } from './GeminiOrchestrator';
 import { NanoBananaGenerator } from './NanoBananaGenerator';
 import { CodeInjector } from './CodeInjector';
+import { ExistingAssetDetector } from './ExistingAssetDetector';
 import { PlatformAssetGenerator } from './PlatformAssetGenerator';
 import { ProjectConfig, CodebaseAnalysis, GenerationPlan, AssetNeed } from '../types';
 import { logger } from '../utils/logger';
@@ -19,11 +20,13 @@ export class GenAssManager {
   private orchestrator: GeminiOrchestrator;
   private generator: NanoBananaGenerator;
   private codeInjector: CodeInjector;
+  private existingAssetDetector: ExistingAssetDetector;
   private platformAssetGenerator: PlatformAssetGenerator;
   private configManager: ConfigManager;
   private config?: ProjectConfig;
   private moveAction?: 'move' | 'move-flat'; // Temp storage for user's move preference
   private generatedAssets: any[] = []; // Track generated assets for injection
+  private forceRegenerate: boolean = false; // Flag to force regeneration
 
   constructor() {
     this.scanner = new CodebaseScanner();
@@ -31,6 +34,7 @@ export class GenAssManager {
     this.orchestrator = new GeminiOrchestrator();
     this.generator = new NanoBananaGenerator();
     this.codeInjector = new CodeInjector();
+    this.existingAssetDetector = new ExistingAssetDetector();
     this.platformAssetGenerator = new PlatformAssetGenerator();
     this.configManager = new ConfigManager();
   }
@@ -175,11 +179,65 @@ export class GenAssManager {
     try {
       const plan = await this.orchestrator.createGenerationPlan(analysis);
       spinner.succeed(`Generated plan for ${plan.assets.length} assets`);
+
+      // Check for existing assets and filter duplicates (unless force regenerate)
+      if (!this.forceRegenerate) {
+        spinner.start('Checking for existing assets...');
+
+        const existingAssets = await this.existingAssetDetector.detectExistingAssets(
+          this.config!.rootPath,
+          this.config!.assetDirectories
+        );
+
+        const { needed, skipped, matched } = await this.existingAssetDetector.filterOutExistingAssets(
+          plan.assets,
+          existingAssets
+        );
+
+        if (skipped.length > 0) {
+          spinner.succeed(`Found ${skipped.length} existing assets - will skip regenerating`);
+
+          // Show what's being skipped
+          console.log(chalk.yellow(`\n⏭️  Skipping ${skipped.length} assets that already exist:\n`));
+          skipped.slice(0, 5).forEach(asset => {
+            const existingAsset = matched.get(asset);
+            const relativePath = existingAsset ? path.relative(this.config!.rootPath, existingAsset.path) : '';
+            console.log(chalk.gray(`  ✓ ${asset.type}: ${asset.description}`));
+            console.log(chalk.gray(`    → Using: ${relativePath}\n`));
+          });
+
+          if (skipped.length > 5) {
+            console.log(chalk.gray(`  ... and ${skipped.length - 5} more\n`));
+          }
+
+          console.log(chalk.gray(`Tip: Use ${chalk.white('/regenerate')} to force regeneration of all assets\n`));
+
+          // Update plan to only include needed assets
+          plan.assets = needed;
+          plan.estimatedCost = this.calculateCost(needed);
+          plan.estimatedTime = this.calculateTime(needed);
+
+          if (needed.length === 0) {
+            console.log(chalk.green('✓ All required assets already exist! Nothing to generate.\n'));
+          }
+        } else {
+          spinner.succeed('No existing assets found - will generate all');
+        }
+      }
+
       return plan;
     } catch (error) {
       spinner.fail('Plan generation failed');
       throw error;
     }
+  }
+
+  private calculateCost(assets: AssetNeed[]): number {
+    return assets.length * 0.039; // Nano Banana cost per image
+  }
+
+  private calculateTime(assets: AssetNeed[]): number {
+    return Math.ceil(assets.length * 0.5); // ~30 seconds per asset
   }
 
   private async presentPlanForApproval(plan: GenerationPlan): Promise<boolean> {

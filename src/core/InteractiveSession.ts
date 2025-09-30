@@ -359,6 +359,16 @@ Current project: ${projectPath}`
         await this.injectGeneratedAssets();
         return true;
 
+      case '/regenerate':
+        console.log(chalk.cyan('🔄 Forcing regeneration of all assets...\n'));
+        this.displayTaskList([
+          { id: '1', description: 'Scanning project', status: 'in_progress' },
+          { id: '2', description: 'Ignoring existing assets', status: 'pending' },
+          { id: '3', description: 'Regenerating all assets', status: 'pending' }
+        ]);
+        await this.processUserInput('Scan my project and regenerate ALL visual assets, even if they already exist. I want to replace existing assets with new AI-generated ones.');
+        return true;
+
       default:
         console.log(chalk.red(`Unknown command: ${cmd}`));
         console.log(chalk.gray('Type /help for available commands\n'));
@@ -385,6 +395,7 @@ Current project: ${projectPath}`
     console.log(chalk.cyan('  /audit    ') + chalk.gray(' - Audit existing assets'));
     console.log(chalk.cyan('  /quick    ') + chalk.gray(' - Generate essential assets only'));
     console.log(chalk.cyan('  /inject   ') + chalk.gray(' - Inject generated assets into code'));
+    console.log(chalk.cyan('  /regenerate') + chalk.gray(' - Force regenerate all (ignore existing)'));
 
     console.log(chalk.bold('\n💬 Natural Language:\n'));
     console.log(chalk.gray('  You can also chat naturally:'));
@@ -850,6 +861,7 @@ Current project: ${projectPath}`
       { name: chalk.cyan('/audit    ') + chalk.gray(' - Audit existing assets'), value: '/audit' },
       { name: chalk.cyan('/quick    ') + chalk.gray(' - Generate essential assets only'), value: '/quick' },
       { name: chalk.cyan('/inject   ') + chalk.gray(' - Inject generated assets into code'), value: '/inject' },
+      { name: chalk.cyan('/regenerate') + chalk.gray(' - Force regenerate all assets (ignore existing)'), value: '/regenerate' },
       new inquirer.Separator(),
       { name: chalk.gray('/help     ') + chalk.gray(' - Show available commands'), value: '/help' },
       { name: chalk.gray('/status   ') + chalk.gray(' - Show session statistics'), value: '/status' },
@@ -894,7 +906,8 @@ Current project: ${projectPath}`
       '/audit',
       '/quick',
       '/pwa',
-      '/inject'
+      '/inject',
+      '/regenerate'
     ];
 
     // Only provide completions if line starts with /
