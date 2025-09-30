@@ -370,6 +370,7 @@ Assets auto-organize by type:
 
 - Read [CONTRIBUTING.md](../CONTRIBUTING.md) to contribute
 - Check [examples/](../examples/) for code samples
+- Join [Discord Community](https://discord.gg/genass) for discussions
 - Visit [GitHub Issues](https://github.com/asghar07/genass/issues) for support
 - Star the repo if you find it useful!
 

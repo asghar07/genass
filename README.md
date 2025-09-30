@@ -453,9 +453,9 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/genass/issues)
-- **Documentation**: [docs.genass.dev](https://docs.genass.dev)
-- **Discord**: [Join our community](https://discord.gg/genass)
+- **Issues**: [GitHub Issues](https://github.com/asghar07/genass/issues)
+- **Discord**: [Join GenAss Community](https://discord.gg/genass)
+- **npm**: [npmjs.com/package/genass](https://www.npmjs.com/package/genass)
 
 ## 🔒 Security
 

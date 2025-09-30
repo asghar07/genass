@@ -176,7 +176,9 @@ genass> /costs
 
 ## Support
 
+- Discord Community: https://discord.gg/genass
 - GitHub Issues: https://github.com/asghar07/genass/issues
+- npm Package: https://www.npmjs.com/package/genass
 - Email: asghar.07@gmail.com
 
 Happy generating! 🎨
