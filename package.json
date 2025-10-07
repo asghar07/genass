@@ -63,7 +63,7 @@
     "fs-extra": "^11.2.0",
     "glob": "^10.3.0",
     "globby": "^14.0.0",
-    "inquirer": "^9.2.12",
+    "inquirer": "^12.9.6",
     "inquirer-autocomplete-prompt": "^3.0.1",
     "mime-types": "^2.1.35",
     "ora": "^8.0.1",
